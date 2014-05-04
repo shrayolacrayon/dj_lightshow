@@ -32,6 +32,7 @@ var increase_volume = function(){
 
 var decrease_volume = function(){
   itunes('setSoundVolume', itunes('soundVolume') - 1);
+  console.log(itunes('soundVolume'));
   return itunes('soundVolume');
 }
 
