@@ -1,6 +1,8 @@
 var //webSocket = require('ws'),
     itunes = require('./itunes'),
-    gestures = require('./gestures')
+    gestures = require('./gestures'),
+    motions = require('./motions'),
+    Leap = require("leapjs");
     //ws = new webSocket('ws://127.0.0.1:6437'),
     //five = require('johnny-five'),
     //board = new five.Board();
@@ -34,8 +36,15 @@ var //webSocket = require('ws'),
   })
 }); */
 
-gestures.read_gesture(function(frame){
+/*gestures.read_gesture(function(frame){
 
+});*/
+Leap.loop(function(frame){
+  if (frame.hands && frame.hands.length > 0){
+    console.log(frame.hands[0].palmPosition);
+  }
 });
+
+
 
 

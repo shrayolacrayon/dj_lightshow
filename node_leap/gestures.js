@@ -103,7 +103,7 @@ var swipe_gesture = function(gesture){
 	
 };
 
-var perform_custom_gesture = function (frame){
+var perform_custom_gesture = function (frame, callback){
   //if the gesture has not already started..
   console.log("in pcg");
   if (precise_hands.start == false){
@@ -128,15 +128,19 @@ var perform_custom_gesture = function (frame){
   }
   else
   {
+    console.log("rotating");
     var current_position = precise_hands.main_hand.stabilizedPalmPosition;
     var distance = Leap.vec3.distance(precise_hands.start_pos, current_position);
     var rot_angle = precise_hands.main_hand.rotationAngle(precise_hands.current_frame);
-    
-    //move the stepper that much of an angle
-    motions.move_stepper(rot_angle);
     console.log(rot_angle);
-    // make the current frame the current frame after moving
-    precise_hands.current_frame = frame;
+    //move the stepper that much of an angle
+    motions.move_stepper(rot_angle, 1, function(){
+        
+        // make the current frame the current frame after moving
+        precise_hands.current_frame = frame;
+        callback();
+    });
+
     
   }
 }
@@ -188,7 +192,7 @@ var perform_gestures = function (frame,gestures,callback){
       gestures.forEach(function(g){
       match_gestures(g);
             //reset precise hands if it has changed
-      console.log("resetting precise hands");
+      //console.log("resetting precise hands");
       precise_hands.start = false;
       });
     } 
@@ -196,13 +200,15 @@ var perform_gestures = function (frame,gestures,callback){
     else if (frame.hands.length >= 2){
       //then we need to look at the radius 
       //console.log("what is going on");
-      perform_custom_gesture(frame);
+      perform_custom_gesture(frame, function(){
+
+      });
     
     }
     else
     {
       //reset precise hands if it has changed
-      console.log("resetting precise hands");
+      //console.log("resetting precise hands");
       precise_hands.start  = false;
     }
 
