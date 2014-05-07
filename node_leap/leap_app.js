@@ -3,6 +3,17 @@ var //webSocket = require('ws'),
     gestures = require('./gestures'),
     motions = require('./motions'),
     Leap = require("leapjs");
+
+  var precise_hands = {
+    hands: [],
+    main_hand: null,
+    still_hand: null,
+    light_servo: {on: true, frame_no: -1, direction: 1},
+    hand_servo: {on: true, frame_no: -1},
+    stepper: {on: true, frame_no: -1 , direction: 1, position: 0, in_motion: false},
+    play: {on: false, frame_no: -1}
+    
+  };
     //ws = new webSocket('ws://127.0.0.1:6437'),
     //five = require('johnny-five'),
     //board = new five.Board();

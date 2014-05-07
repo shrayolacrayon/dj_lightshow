@@ -3,22 +3,16 @@ var Leap = require("leapjs");
 var itunes = require("./itunes")
 var motions = require("./motions")
 
+
 var swipe = {
   start: false,
   start_pos : null,
   start_dir : null,
 };
 
-var precise_hands = {
-  hands: [],
-  main_hand: null,
-  still_hand: null,
-  light_servo: {on: false, frame_no: -1, direction: 1},
-  hand_servo: {on: false, frame_no: -1},
-  stepper: {on: false, frame_no: -1},
-  play: {on: false, frame_no: -1}
-  
-};
+var constants = require('./constants');
+var ph = constants.ph;
+
 
 // this is one second
 var FRAME_THRESH = 60;
@@ -52,7 +46,7 @@ var swipe_gesture = function(gesture){
   
 
   if (swipe_g.state == 'start'){
-  console.log('start');
+  //console.log('start');
   var gesture_dir = gesture.direction;
   //get the vectors of the gesture direction
   var x = gesture_dir[0];
@@ -109,100 +103,87 @@ var swipe_gesture = function(gesture){
 var perform_custom_gesture = function (frame, callback){
   //if the gesture has not already started..
   console.log("in pcg");
-  //if (precise_hands.start == false){
-    // make it true
-    //precise_hands.start = true;
     // add the hands
-    precise_hands.hands = frame.hands;
+    ph.hands = frame.hands;
     // figure out which hand id goes with each one - the one with the 
     // bigger radius is the one that is still. 
     if (frame.hands[0].sphereRadius > frame.hands[1].sphereRadius){
-      precise_hands.still_hand = frame.hands[0];
-      precise_hands.main_hand = frame.hands[1];
+      ph.still_hand = frame.hands[0];
+      ph.main_hand = frame.hands[1];
     }
     else
     {
-      precise_hands.still_hand = frame.hands[1];
-      precise_hands.main_hand = frame.hands[0];
+      ph.still_hand = frame.hands[1];
+      ph.main_hand = frame.hands[0];
     }
-    precise_hands.start_pos = precise_hands.main_hand.stabilizedPalmPosition;
+    ph.start_pos = ph.main_hand.stabilizedPalmPosition;
     //z must be negative and x be position
-    if (precise_hands.start_pos[0] > 0 && precise_hands.start_pos[2] < 0){
+    if  ph.start_pos[0] > 0 && ph.start_pos[2] < 0){
       //light servo
-      if (precise_hands.main_hand.fingers.length == 1){
-        if (frame.id - precise_hands.light_servo.frame_no > FRAME_THRESH){
-          precise_hands.light_servo.on = !precise_hands.light_servo.on;
-          precise_hands.light_servo.frame_no = frame.id;
-          //motions.spin_lights(precise_hands.light_servo.on);
+      if  ph.main_hand.fingers.length == 1){
+        if (frame.id - ph.light_servo.frame_no > FRAME_THRESH){
+          ph.light_servo.on =  ph.light_servo.on;
+          ph.light_servo.frame_no = frame.id;
+          //motions.spin_lights ph.light_servo.on);
         }
       }
       //hand servo
-      else if (precise_hands.main_hand.fingers.length == 2){
-        if (frame.id - precise_hands.hand_servo.frame_no > FRAME_THRESH){
-          precise_hands.hand_servo.on = !precise_hands.hand_servo.on;
-          precise_hands.hand_servo.frame_no = frame.id
-          //motions.move_servo(precise_hands.hand_servo.on);
+      else if  ph.main_hand.fingers.length == 2){
+        if (frame.id - ph.hand_servo.frame_no > FRAME_THRESH){
+          ph.hand_servo.on =  ph.hand_servo.on;
+          ph.hand_servo.frame_no = frame.id
+          //motions.move_servo ph.hand_servo.on);
         }
       }
       //stepper
-      else if (precise_hands.main_hand.fingers.length == 3){
-        if (frame.id - precise_hands.stepper.frame_no > FRAME_THRESH){
-          precise_hands.stepper.on = !precise_hands.stepper.on;
-          precise_hands.stepper.frame_no = frame.id;
-          //motions.move_stepper(precise_hands.stepper.on);
+      else if  ph.main_hand.fingers.length == 3){
+        if (frame.id - ph.stepper.frame_no > FRAME_THRESH){
+          console.log("changing stepper");
+          ph.stepper.on =  ph.stepper.on;
+          ph.stepper.frame_no = frame.id;
+          //motions.move_stepper ph.stepper.on);
         }
       }
-
     }
     //play/pause
-    else if (precise_hands.start_pos[0] < 0 && precise_hands.start_pos[2] < 0){
-      if (frame.id - precise_hands.play.frame_no > FRAME_THRESH){
-        precise_hands.play.on = !precise_hands.play.on;
-        precise_hands.frame_no = frame.id;
+    else if  ph.start_pos[0] < 0 && ph.start_pos[2] < 0){
+      if (frame.id - ph.play.frame_no > FRAME_THRESH){
+        ph.play.on =  ph.play.on;
+        ph.frame_no = frame.id;
         console.log(itunes.play_pause());
       }
     }
-    //console.log(precise_hands);
+    //console.log ph);
   };
-  /*else
-  {
-    console.log("rotating");
-    var current_position = precise_hands.main_hand.stabilizedPalmPosition;
-    var distance = Leap.vec3.distance(precise_hands.start_pos, current_position);
-    var rot_angle = precise_hands.main_hand.rotationAngle(precise_hands.current_frame);
-    console.log(rot_angle);
-    //move the stepper that much of an angle
-    motions.move_stepper(rot_angle, 1, function(){
-        
-        // make the current frame the current frame after moving
-        precise_hands.current_frame = frame;
-        callback();
-    });
-
-    
-  } */
 
 
-
+var start_components = function(callback){
+    //console.log("start components");
+    motions.spin_lights ph.light_servo.direction, ph.light_servo.on);
+    motions.move_servo ph.hand_servo.on);
+    if  ph.stepper.on){
+      console.log("in if statement");
+      motions.move_stepper(30, ph.stepper.direction, ph.position, ph.stepper.in_motion,
+        function(position){
+          ph.position += position;
+      });
+}
 /*  reads in a gesture - this is what is called. 
     We then need to match that gesture and etc. */
 
 var read_gesture = function(callback){
-   Leap.loop({enableGestures: true}, function(frame){
-
-      motions.spin_lights(precise_hands.light_servo.direction, precise_hands.light_servo.on);
-
-      motions.move_servo(precise_hands.hand_servo.on);
-      if (precise_hands.stepper.on)
-        motions.move_stepper(30);
-      if (frame.gestures && frame.gestures.length > 0)
-        {
-         perform_gestures(frame, frame.gestures, function(){
-      
-         });
-        }
+  motions.start_board(function(){
+    console.log("only called once...");
+    Leap.loop({enableGestures: true}, function(frame){
+    start_components();
+    if (frame.gestures && frame.gestures.length > 0)
+    {
+     perform_gestures(frame, frame.gestures, function(){
+     });
+    }
   });
 
+ });
   };
 
 /* matches the gestures based on the pre-determined
@@ -236,7 +217,7 @@ var perform_gestures = function (frame,gestures,callback){
       match_gestures(g);
             //reset precise hands if it has changed
       //console.log("resetting precise hands");
-      precise_hands.start = false;
+      ph.start = false;
       });
     } 
     // if the number of hands is 2 then control the stepper motor
@@ -244,7 +225,6 @@ var perform_gestures = function (frame,gestures,callback){
       //then we need to look at the radius 
       //console.log("what is going on");
       perform_custom_gesture(frame, function(){
-
       });
     }
   }
