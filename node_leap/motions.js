@@ -1,7 +1,6 @@
 var five = require('johnny-five'),
     board = new five.Board();
-var constants = require('./constants')
-var ph = constants.ph;
+var hd = require('./constants')
 
 
 //variables for the mechanical components
@@ -15,14 +14,16 @@ var start_board = function(callback){
         type: five.Stepper.TYPE.FOUR_WIRE,
         stepsPerRev: 200,
         pins: [ 6,7,8,9 ]});
-      /*light_servo = new five.Servo({
-        pin: 12,
+      light_servo = new five.Servo({
+        pin: 11,
         type: "continuous"
       });
       servo = new five.Servo({
-        pin: 12,
-        type: "standard"
-      }) */
+        pin: 10,
+        type: "standard",
+        startAt: 90,
+        range: [0,180]
+      }) 
       callback();
     }); 
   };
@@ -34,29 +35,26 @@ var start_board = function(callback){
 
 
 // moves the stepper a certain number of beats per minute
-var move_stepper = function(bpm, dir, position, motion, callback){
-  if (motion){
-    console.log("in motion");
+var move_stepper = function(bpm, callback){
+  current_stepper = hd.ph().stepper;
+  if (current_stepper.in_motion || !current_stepper.on){
+    //console.log("doing nothing");
     return;
   }
-    /*stepper.rpm(bpm).speed(bpm);
-    stepper.step({steps: 90, direction: 1}, function(){
-      console.log("moved");
-      callback(position);
-  }); */
- //console.log("in move_stepper");
+
+ hd.set_stepper_motion(true);
  console.log("move_stepper");
- stepper.rpm(180).direction(five.Stepper.DIRECTION.CCW).accel(1600).decel(1600).step(2000, function() {
+ stepper.rpm(bpm).direction(five.Stepper.DIRECTION.CCW).accel(1600).decel(1600).step(180, function() {
     console.log("done moving CCW");
 
     // once first movement is done, make 10 revolutions clockwise at previously
     //      defined speed, accel, and decel by passing an object into stepper.step
     stepper.step({
-      steps: 2000,
+      steps: 180,
       direction: five.Stepper.DIRECTION.CCW
     }, function() {
       console.log('done moving CW');
-      callback();
+      hd.set_stepper_motion(false);
     });
   });
   };
@@ -64,23 +62,35 @@ var move_stepper = function(bpm, dir, position, motion, callback){
 
 
 /** moves the servo in the direction given */
-var move_servo = function(on){
-  if (on){
+var move_servo = function(){
+  console.log('move_servo');
+  var current_servo = hd.ph().hand_servo;
+  if (current_servo.in_motion){
+    console.log('servo_motion')
+    return;}
+  if (current_servo.on){
+    current_servo.in_motion = true;
     servo.sweep();
+    current_servo.in_motion = false;
   }
   else
+  {
+    current_stepper.in_motion = true;
     servo.stop();
+    current_servo.in_motion = false;
+  }
 };
 
 /** spins the lights in a certain direction */
-var spin_lights = function(direction, on){
-  if (on){
-    if (direction == 1)
+var spin_lights = function(){
+  var current_lights = hd.ph().light_servo;
+  if (current_lights.on){
+    if (current_lights.direction == 1)
       light_servo.cw(1);
     else
       light_servo.ccw(1);
   }
-  else{
+  else {
     servo.stop();
   }
 
@@ -90,5 +100,5 @@ var spin_lights = function(direction, on){
  
 exports.move_stepper = move_stepper;
 exports.spin_lights = function(){return;};
-exports.move_servo = function(){return;}
-exports.start_board = start_board
+exports.move_servo = move_servo;
+exports.start_board = start_board;

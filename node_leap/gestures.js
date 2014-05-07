@@ -10,8 +10,8 @@ var swipe = {
   start_dir : null,
 };
 
-var constants = require('./constants');
-var ph = constants.ph;
+var hd = require('./constants');
+var ph = hd.ph;
 
 
 // this is one second
@@ -19,24 +19,7 @@ var FRAME_THRESH = 60;
 
 /* GESTURES */
 
-/*  this should move the servo in a clockwise or counter
-    clockwise direction */
-var circle_gesture = function(gesture){
-  //console.log('circle');
-  return;
-}
 
-/*  this should do nothing? */
-var key_tap_gesture = function(gesture){
-  //console.log('key');
-  return;
-  }
-
-/* manages play/pause */
-
-var screen_gesture = function(gesture){
-  return;
-}
 
 /* controls the volume and the music forward and backward */
 
@@ -108,48 +91,27 @@ var perform_custom_gesture = function (frame, callback){
     // figure out which hand id goes with each one - the one with the 
     // bigger radius is the one that is still. 
     if (frame.hands[0].sphereRadius > frame.hands[1].sphereRadius){
-      ph.still_hand = frame.hands[0];
-      ph.main_hand = frame.hands[1];
+      hd.set_hands(frame.hands,frame.hands[0],frame.hands[1]);
     }
     else
     {
-      ph.still_hand = frame.hands[1];
-      ph.main_hand = frame.hands[0];
+      hd.set_hands(frame.hands,frame.hands[1],frame.hands[0]);
     }
-    ph.start_pos = ph.main_hand.stabilizedPalmPosition;
+    // create a start position
+    var start_pos = ph.main_hand.stabilizedPalmPosition;
     //z must be negative and x be position
-    if  ph.start_pos[0] > 0 && ph.start_pos[2] < 0){
-      //light servo
-      if  ph.main_hand.fingers.length == 1){
-        if (frame.id - ph.light_servo.frame_no > FRAME_THRESH){
-          ph.light_servo.on =  ph.light_servo.on;
-          ph.light_servo.frame_no = frame.id;
-          //motions.spin_lights ph.light_servo.on);
-        }
-      }
-      //hand servo
-      else if  ph.main_hand.fingers.length == 2){
-        if (frame.id - ph.hand_servo.frame_no > FRAME_THRESH){
-          ph.hand_servo.on =  ph.hand_servo.on;
-          ph.hand_servo.frame_no = frame.id
-          //motions.move_servo ph.hand_servo.on);
-        }
-      }
-      //stepper
-      else if  ph.main_hand.fingers.length == 3){
-        if (frame.id - ph.stepper.frame_no > FRAME_THRESH){
-          console.log("changing stepper");
-          ph.stepper.on =  ph.stepper.on;
-          ph.stepper.frame_no = frame.id;
-          //motions.move_stepper ph.stepper.on);
+    if  (start_pos[0] > 0 && start_pos[2] < 0){
+      var num_fingers = ph.main_hand.fingers.length;
+      if (num_fingers <= 3 && num_fingers > 0){
+        if (frame.id - hd.get_frame_no(num_fingers) > FRAME_THRESH){
+          hd.set_frame_on(num_fingers, frame.id);
         }
       }
     }
     //play/pause
-    else if  ph.start_pos[0] < 0 && ph.start_pos[2] < 0){
-      if (frame.id - ph.play.frame_no > FRAME_THRESH){
-        ph.play.on =  ph.play.on;
-        ph.frame_no = frame.id;
+    else if (start_pos[0] < 0 && start_pos[2] < 0){
+      if (frame.id - ph().play.frame_no > FRAME_THRESH){
+        hd.set_frame_on(100, frame.id)
         console.log(itunes.play_pause());
       }
     }
@@ -159,14 +121,9 @@ var perform_custom_gesture = function (frame, callback){
 
 var start_components = function(callback){
     //console.log("start components");
-    motions.spin_lights ph.light_servo.direction, ph.light_servo.on);
-    motions.move_servo ph.hand_servo.on);
-    if  ph.stepper.on){
-      console.log("in if statement");
-      motions.move_stepper(30, ph.stepper.direction, ph.position, ph.stepper.in_motion,
-        function(position){
-          ph.position += position;
-      });
+    motions.spin_lights();
+    motions.move_servo();
+    motions.move_stepper(30);
 }
 /*  reads in a gesture - this is what is called. 
     We then need to match that gesture and etc. */
