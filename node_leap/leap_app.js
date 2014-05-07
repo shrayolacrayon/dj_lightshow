@@ -14,36 +14,16 @@ var //webSocket = require('ws'),
   We then need to create a vocabulary of gestures that will be able to connect the data given by the leap motion (ie. from the frames)
   A good way to do that is to define functions for each of the types of gestures and then call those functions 
    */
-/*board.on('ready', function(){
-  //led = new five.Led(11);
-  //servo = new five.Servo(10);
-  //servo.center();
-  /*ws.on('message', function(data, flags){
-    frame = JSON.parse(data);
 
-    if (frame.hands && frame.hands.length > 1){
-      console.log(frame);
-      led.on();
-      servo.to(180);
-    }
-    else{
-      led.off();
-      servo.to(90);
-    }
-  }) 
-  gestures.read_gesture(function(frame){
-    
-  })
-}); */
 
-/*gestures.read_gesture(function(frame){
+gestures.read_gesture(function(frame){
 
-});*/
-Leap.loop(function(frame){
+});
+/*Leap.loop(function(frame){
   if (frame.hands && frame.hands.length > 0){
     console.log(frame.hands[0].palmPosition);
   }
-});
+}); */
 
 
 

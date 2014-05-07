@@ -10,35 +10,38 @@ var swipe = {
 };
 
 var precise_hands = {
-  start : false,
   hands: [],
   main_hand: null,
   still_hand: null,
-  start_pos: null,
-  start_dir: null,
-  current_frame : null
+  light_servo: {on: false, frame_no: -1, direction: 1},
+  hand_servo: {on: false, frame_no: -1},
+  stepper: {on: false, frame_no: -1},
+  play: {on: false, frame_no: -1}
   
 };
+
+// this is one second
+var FRAME_THRESH = 60;
 
 /* GESTURES */
 
 /*  this should move the servo in a clockwise or counter
     clockwise direction */
 var circle_gesture = function(gesture){
-  console.log('circle');
+  //console.log('circle');
+  return;
 }
 
 /*  this should do nothing? */
 var key_tap_gesture = function(gesture){
-  console.log('key');
-
+  //console.log('key');
+  return;
   }
 
 /* manages play/pause */
 
 var screen_gesture = function(gesture){
-  console.log('screen');
-  console.log(itunes.play_pause());
+  return;
 }
 
 /* controls the volume and the music forward and backward */
@@ -106,9 +109,9 @@ var swipe_gesture = function(gesture){
 var perform_custom_gesture = function (frame, callback){
   //if the gesture has not already started..
   console.log("in pcg");
-  if (precise_hands.start == false){
+  //if (precise_hands.start == false){
     // make it true
-    precise_hands.start = true;
+    //precise_hands.start = true;
     // add the hands
     precise_hands.hands = frame.hands;
     // figure out which hand id goes with each one - the one with the 
@@ -123,10 +126,45 @@ var perform_custom_gesture = function (frame, callback){
       precise_hands.main_hand = frame.hands[0];
     }
     precise_hands.start_pos = precise_hands.main_hand.stabilizedPalmPosition;
-    precise_hands.current_frame = frame;
+    //z must be negative and x be position
+    if (precise_hands.start_pos[0] > 0 && precise_hands.start_pos[2] < 0){
+      //light servo
+      if (precise_hands.main_hand.fingers.length == 1){
+        if (frame.id - precise_hands.light_servo.frame_no > FRAME_THRESH){
+          precise_hands.light_servo.on = !precise_hands.light_servo.on;
+          precise_hands.light_servo.frame_no = frame.id;
+          //motions.spin_lights(precise_hands.light_servo.on);
+        }
+      }
+      //hand servo
+      else if (precise_hands.main_hand.fingers.length == 2){
+        if (frame.id - precise_hands.hand_servo.frame_no > FRAME_THRESH){
+          precise_hands.hand_servo.on = !precise_hands.hand_servo.on;
+          precise_hands.hand_servo.frame_no = frame.id
+          //motions.move_servo(precise_hands.hand_servo.on);
+        }
+      }
+      //stepper
+      else if (precise_hands.main_hand.fingers.length == 3){
+        if (frame.id - precise_hands.stepper.frame_no > FRAME_THRESH){
+          precise_hands.stepper.on = !precise_hands.stepper.on;
+          precise_hands.stepper.frame_no = frame.id;
+          //motions.move_stepper(precise_hands.stepper.on);
+        }
+      }
+
+    }
+    //play/pause
+    else if (precise_hands.start_pos[0] < 0 && precise_hands.start_pos[2] < 0){
+      if (frame.id - precise_hands.play.frame_no > FRAME_THRESH){
+        precise_hands.play.on = !precise_hands.play.on;
+        precise_hands.frame_no = frame.id;
+        console.log(itunes.play_pause());
+      }
+    }
     //console.log(precise_hands);
-  }
-  else
+  };
+  /*else
   {
     console.log("rotating");
     var current_position = precise_hands.main_hand.stabilizedPalmPosition;
@@ -142,8 +180,8 @@ var perform_custom_gesture = function (frame, callback){
     });
 
     
-  }
-}
+  } */
+
 
 
 /*  reads in a gesture - this is what is called. 
@@ -151,16 +189,21 @@ var perform_custom_gesture = function (frame, callback){
 
 var read_gesture = function(callback){
    Leap.loop({enableGestures: true}, function(frame){
-      //console.log(Leap);
+
+      motions.spin_lights(precise_hands.light_servo.direction, precise_hands.light_servo.on);
+
+      motions.move_servo(precise_hands.hand_servo.on);
+      if (precise_hands.stepper.on)
+        motions.move_stepper(30);
       if (frame.gestures && frame.gestures.length > 0)
         {
          perform_gestures(frame, frame.gestures, function(){
-
+      
          });
         }
   });
 
-  }
+  };
 
 /* matches the gestures based on the pre-determined
   type of gesture in order to do the action */
@@ -170,7 +213,7 @@ var match_gestures = function(gesture){
     if (g_type == 'swipe'){
       swipe_gesture(gesture);
     }
-    else if (g_type == 'circle'){
+    /*else if (g_type == 'circle'){
       circle_gesture(gesture);
     }
     else if (g_type == 'screenTap'){
@@ -178,8 +221,8 @@ var match_gestures = function(gesture){
     }
     else if (g_type == 'keyTap'){
       key_tap_gesture(gesture);
-    }
-}
+    }*/
+};
 
 /*  this is where we evaluate whether the gesture is a predetermined one 
     or not */
@@ -203,21 +246,10 @@ var perform_gestures = function (frame,gestures,callback){
       perform_custom_gesture(frame, function(){
 
       });
-    
     }
-    else
-    {
-      //reset precise hands if it has changed
-      //console.log("resetting precise hands");
-      precise_hands.start  = false;
-    }
+  }
 
-  }
-  else
-  {
-    precise_hands.start = false;
-  }
-}
+};
 
 
 
