@@ -98,10 +98,11 @@ var perform_custom_gesture = function (frame, callback){
       hd.set_hands(frame.hands,frame.hands[1],frame.hands[0]);
     }
     // create a start position
-    var start_pos = ph.main_hand.stabilizedPalmPosition;
+    var start_pos = ph().main_hand.stabilizedPalmPosition;
     //z must be negative and x be position
     if  (start_pos[0] > 0 && start_pos[2] < 0){
-      var num_fingers = ph.main_hand.fingers.length;
+      var num_fingers = ph().main_hand.fingers.length;
+      console.log(num_fingers);
       if (num_fingers <= 3 && num_fingers > 0){
         if (frame.id - hd.get_frame_no(num_fingers) > FRAME_THRESH){
           hd.set_frame_on(num_fingers, frame.id);

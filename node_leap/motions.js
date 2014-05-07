@@ -63,7 +63,6 @@ var move_stepper = function(bpm, callback){
 
 /** moves the servo in the direction given */
 var move_servo = function(){
-  console.log('move_servo');
   var current_servo = hd.ph().hand_servo;
   if (current_servo.in_motion){
     console.log('servo_motion')
@@ -100,5 +99,5 @@ var spin_lights = function(){
  
 exports.move_stepper = move_stepper;
 exports.spin_lights = function(){return;};
-exports.move_servo = move_servo;
+exports.move_servo = function(){return;};
 exports.start_board = start_board;
